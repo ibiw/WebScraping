@@ -88,6 +88,10 @@ class WebScraping():
         import time
         import sys
 
+        from selenium.webdriver.common.by import By
+        from selenium.webdriver.support.ui import WebDriverWait
+        from selenium.webdriver.support import expected_conditions as EC
+
         # data = []
         keyStatList = []
 
@@ -113,18 +117,8 @@ class WebScraping():
             while i < 5:
                 try:
                     driver.get(url)
-                    time.sleep(5)
+                    time.sleep(6)
                     i=5
-                # except http.client.RemoteDisconnected:
-                #     print('http.client.RemoteDisconnected')
-                #     # driver = webdriver.Firefox()
-                #     sleep(5)
-                #     driver = webdriver.PhantomJS(service_args=['--webdriver-loglevel=ERROR'], service_log_path='/tmp/ghostdriver.log')
-                #     time.sleep(1)
-                #     driver.get(url)
-                #     sleep(3)
-                #     print('Retry -- ' + i + ' time!' )
-                #     i += 1
                 except:
                     print("Unexpected error:", sys.exc_info()[0])
                     raise
@@ -138,42 +132,36 @@ class WebScraping():
                     i += 1
 
             try:
-                roa = driver.find_element_by_xpath("//*[contains(@data-reactid, '$RETURN_ON_ASSETS')]").text.rsplit(' ', 1)[1]
-                roe = driver.find_element_by_xpath("//*[contains(@data-reactid, '$RETURN_ON_EQUITY')]").text.rsplit(' ', 1)[1]
-                de_ratio = driver.find_element_by_xpath("//*[contains(@data-reactid, '$TOTAL_DEBT_TO_EQUITY')]").text.rsplit(' ', 1)[1]
-                current_ratio = driver.find_element_by_xpath("//*[contains(@data-reactid, '$CURRENT_RATIO')]").text.rsplit(' ', 1)[1]
+                if 'Yahoo Finance' in driver.title:
+                    print(driver.title)
+                    t = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, "//head/title[contains(., 'Yahoo Finance')]")))
+                    # roa = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, "//*[contains(@data-reactid, '$RETURN_ON_ASSETS')]")))
+                    roa = driver.find_element_by_xpath("//*[contains(@data-reactid, '$RETURN_ON_ASSETS')]").text.rsplit(' ', 1)[1]
+                    roe = driver.find_element_by_xpath("//*[contains(@data-reactid, '$RETURN_ON_EQUITY')]").text.rsplit(' ', 1)[1]
+                    de_ratio = driver.find_element_by_xpath("//*[contains(@data-reactid, '$TOTAL_DEBT_TO_EQUITY')]").text.rsplit(' ', 1)[1]
+                    current_ratio = driver.find_element_by_xpath("//*[contains(@data-reactid, '$CURRENT_RATIO')]").text.rsplit(' ', 1)[1]
 
-                # xpath how to:
-                # //td[text()="${nbsp}"]
-                # //table[@id='TableID']//td[text()=' '] ?
-                # //readAudit[@id='root'][1]
-                # //a[contains(@prop,'Foo')]
+                    # xpath how to:
+                    # //td[text()="${nbsp}"]
+                    # //table[@id='TableID']//td[text()=' '] ?
+                    # //readAudit[@id='root'][1]
+                    # //a[contains(@prop,'Foo')]
 
-                # split last character with rsplit
-                data.extend([roa, roe, de_ratio, current_ratio])
-                print(data)
+                    # split last character with rsplit
+                    data.extend([roa, roe, de_ratio, current_ratio])
+                    print(data)
 
-                if WebScraping.yahooKeyStat(data[0], data[1], data[2], data[3]):
-                    keyStatList.append(stock)
-                    print(keyStatList)
+                    if WebScraping.yahooKeyStat(data[0], data[1], data[2], data[3]):
+                        keyStatList.append(stock)
+                        print(keyStatList)
                 # print(data)
                 # return data
             except NoSuchElementException:
                 print('NoSuchElementException')
-        
-            # driver.close()
-            # driver.quit()
-        # driver.quit()
+            time.sleep(3)
         return(keyStatList)
-            
-                
-
-
-
-
 
 # ftnt = 'https://finance.yahoo.com/quote/FTNT/key-statistics'
-# fit = 'https://finance.yahoo.com/quote/FIT/key-statistics'
 
 def test():
     stocks = ['ftnt', 'fit', 'anet']
@@ -182,26 +170,15 @@ def test():
     WebScraping.seleniumGet(stocks)
 # print(WebScraping.seleniumGet('fit'))
 
-
       # df = pd.read_csv("nasdaq.csv")	## 1
         # df = pd.read_csv("nyse.csv")	## 2
         # df = pd.read_csv("amex.csv")	## 3
 
 # sfiles = ['nasdaq.csv', 'nyse.csv', 'amex.csv']
-sfiles = ['nasdaq.csv']
+sfiles = ['nyse.csv']
 for file in sfiles:
     stocks = WebScraping.getSymbol(file)
-
-    # for stock in stocks:
-    #     stock = stock.replace(' ', '')
-        # url = 'https://finance.yahoo.com/quote/' + stock + '/key-statistics'
-        # print(url)
     data = WebScraping.seleniumGet(stocks)
-        # if len(data) == 4:        
-        #     # print(data[0], data[1], data[2], data[3])        
-        #     if WebScraping.yahooKeyStat(data[0], data[1], data[2], data[3]):
-        #         keyStatList.append(stock)
-    
     print(data)
 
 
