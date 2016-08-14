@@ -161,15 +161,15 @@ class WebScraping():
                     # pass
                     # driver.quit()
                     if count % 25 == 0:
-                        print('-->{}'.format(count))
+                        print('------>{}'.format(count))
                         driver.quit() 
                         time.sleep(2)
                         driver = webdriver.PhantomJS(service_args=['--webdriver-loglevel=ERROR'], service_log_path='/tmp/ghostdriver.log')
                         time.sleep(1)
 
 
-            return(keyStatList)
-        driver.close
+            driver.close
+            return keyStatList
 
 
 # ftnt = 'https://finance.yahoo.com/quote/FTNT/key-statistics'
@@ -185,9 +185,11 @@ def test():
         # df = pd.read_csv("nyse.csv")	## 2
         # df = pd.read_csv("amex.csv")	## 3
 
-# sfiles = ['nasdaq.csv', 'nyse.csv', 'amex.csv']
-sfiles = ['nyse.csv']
+sfiles = ['nasdaq.csv', 'nyse.csv', 'amex.csv']
+# sfiles = ['nyse.csv']
 for file in sfiles:
+    print('-'*20 + file + '-'*20)
+    
     stocks = WebScraping.getSymbol(file)
     data = WebScraping.seleniumGet(stocks)
     print(data)
