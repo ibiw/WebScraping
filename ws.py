@@ -102,63 +102,75 @@ class WebScraping():
         # time.sleep(5)
         sum = len(stocks)
         count = 1
-
-        for stock in stocks:
+        while count <= sum:
             driver = webdriver.PhantomJS(service_args=['--webdriver-loglevel=ERROR'], service_log_path='/tmp/ghostdriver.log')
-            # time.sleep(2)
-            
-            print('{}/{}'.format(count, sum))
-            count += 1
+            for stock in stocks:
 
-            data = []
-            stock = stock.replace(' ', '')
-            url = 'https://finance.yahoo.com/quote/' + stock + '/key-statistics'
-            print(url)
-            # TimeoutError urllib.error.URLError
-            try:
-                driver.get(url)
-                # time.sleep(1.5)
-                try:
-                        t = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, "//head/title[contains(., 'Yahoo Finance')]")))
-
-                        if 'Yahoo Finance' in driver.title:
-                            print(driver.title) 
-                            # roa = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, "//*[contains(@data-reactid, '$RETURN_ON_ASSETS')]")))
-                            roa = driver.find_element_by_xpath("//*[contains(@data-reactid, '$RETURN_ON_ASSETS')]").text.rsplit(' ', 1)[1]
-                            roe = driver.find_element_by_xpath("//*[contains(@data-reactid, '$RETURN_ON_EQUITY')]").text.rsplit(' ', 1)[1]
-                            de_ratio = driver.find_element_by_xpath("//*[contains(@data-reactid, '$TOTAL_DEBT_TO_EQUITY')]").text.rsplit(' ', 1)[1]
-                            current_ratio = driver.find_element_by_xpath("//*[contains(@data-reactid, '$CURRENT_RATIO')]").text.rsplit(' ', 1)[1]
-
-                            # xpath how to:
-                            # //td[text()="${nbsp}"]
-                            # //table[@id='TableID']//td[text()=' '] ?
-                            # //readAudit[@id='root'][1]
-                            # //a[contains(@prop,'Foo')]
-
-                            # split last character with rsplit
-                            data.extend([roa, roe, de_ratio, current_ratio])
-                            print(data)
-
-                            if WebScraping.yahooKeyStat(data[0], data[1], data[2], data[3]):
-                                keyStatList.append(stock)
-                                print(keyStatList)
-
-                except NoSuchElementException:
-                    print('NoSuchElementException')
+                # driver = webdriver.PhantomJS(service_args=['--webdriver-loglevel=ERROR'], service_log_path='/tmp/ghostdriver.log')
+                # time.sleep(2)
                 
-                except TimeoutException:
-                    print('TimeoutException')
+                print('{}/{}'.format(count, sum))
+                count += 1
 
-                # else:
-                #     print('Unexcepted Error')
+                data = []
+                stock = stock.replace(' ', '')
+                url = 'https://finance.yahoo.com/quote/' + stock + '/key-statistics'
+                print(url)
+                # TimeoutError urllib.error.URLError
+                try:
+                    driver.get(url)
+                    # time.sleep(1.5)
+                    try:
+                            t = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, "//head/title[contains(., 'Yahoo Finance')]")))
+
+                            if 'Yahoo Finance' in driver.title:
+                                print(driver.title) 
+                                # roa = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, "//*[contains(@data-reactid, '$RETURN_ON_ASSETS')]")))
+                                roa = driver.find_element_by_xpath("//*[contains(@data-reactid, '$RETURN_ON_ASSETS')]").text.rsplit(' ', 1)[1]
+                                roe = driver.find_element_by_xpath("//*[contains(@data-reactid, '$RETURN_ON_EQUITY')]").text.rsplit(' ', 1)[1]
+                                de_ratio = driver.find_element_by_xpath("//*[contains(@data-reactid, '$TOTAL_DEBT_TO_EQUITY')]").text.rsplit(' ', 1)[1]
+                                current_ratio = driver.find_element_by_xpath("//*[contains(@data-reactid, '$CURRENT_RATIO')]").text.rsplit(' ', 1)[1]
+
+                                # xpath how to:
+                                # //td[text()="${nbsp}"]
+                                # //table[@id='TableID']//td[text()=' '] ?
+                                # //readAudit[@id='root'][1]
+                                # //a[contains(@prop,'Foo')]
+
+                                # split last character with rsplit
+                                data.extend([roa, roe, de_ratio, current_ratio])
+                                print(data)
+
+                                if WebScraping.yahooKeyStat(data[0], data[1], data[2], data[3]):
+                                    keyStatList.append(stock)
+                                    print(keyStatList)
+
+                    except NoSuchElementException:
+                        print('NoSuchElementException')
+                    
+                    except TimeoutException:
+                        print('TimeoutException')
+
+                    # else:
+                    #     print('Unexcepted Error')
+
+                    finally:
+                        pass
 
                 finally:
-                    pass
+                    # pass
+                    # driver.quit()
+                    if count % 25 == 0:
+                        print('-->{}'.format(count))
+                        driver.quit() 
+                        time.sleep(2)
+                        driver = webdriver.PhantomJS(service_args=['--webdriver-loglevel=ERROR'], service_log_path='/tmp/ghostdriver.log')
+                        time.sleep(1)
 
-            finally:
-                driver.quit()
 
-        return(keyStatList)
+            return(keyStatList)
+        driver.close
+
 
 # ftnt = 'https://finance.yahoo.com/quote/FTNT/key-statistics'
 
