@@ -84,7 +84,7 @@ class WebScraping():
     @classmethod
     def seleniumGet(cls, stocks):
         from selenium import webdriver
-        from selenium.common.exceptions import NoSuchElementException
+        from selenium.common.exceptions import NoSuchElementException, TimeoutException
         import time
         import sys
 
@@ -92,19 +92,21 @@ class WebScraping():
         from selenium.webdriver.support.ui import WebDriverWait
         from selenium.webdriver.support import expected_conditions as EC
 
-        # data = []
         keyStatList = []
 
         # driver = webdriver.Firefox()
         # driver = webdriver.Chrome()
-        driver = webdriver.PhantomJS(service_args=['--webdriver-loglevel=ERROR'], service_log_path='/tmp/ghostdriver.log')
+        # driver = webdriver.PhantomJS(service_args=['--webdriver-loglevel=ERROR'], service_log_path='/tmp/ghostdriver.log')
         # driver = webdriver.PhantomJS()
         # driver.get(url)
-        time.sleep(1)
+        # time.sleep(5)
         sum = len(stocks)
         count = 1
 
         for stock in stocks:
+            driver = webdriver.PhantomJS(service_args=['--webdriver-loglevel=ERROR'], service_log_path='/tmp/ghostdriver.log')
+            # time.sleep(2)
+            
             print('{}/{}'.format(count, sum))
             count += 1
 
@@ -112,53 +114,50 @@ class WebScraping():
             stock = stock.replace(' ', '')
             url = 'https://finance.yahoo.com/quote/' + stock + '/key-statistics'
             print(url)
-            i = 0
             # TimeoutError urllib.error.URLError
-            while i < 5:
-                try:
-                    driver.get(url)
-                    time.sleep(6)
-                    i=5
-                except:
-                    print("Unexpected error:", sys.exc_info()[0])
-                    raise
-                    # raise ValueError from None
-                    sleep(15)
-                    driver = webdriver.PhantomJS(service_args=['--webdriver-loglevel=ERROR'], service_log_path='/tmp/ghostdriver.log')
-                    time.sleep(1)
-                    driver.get(url)
-                    sleep(3)
-                    print('Retry -- ' + i + ' time!' )
-                    i += 1
-
             try:
-                if 'Yahoo Finance' in driver.title:
-                    print(driver.title)
-                    t = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, "//head/title[contains(., 'Yahoo Finance')]")))
-                    # roa = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, "//*[contains(@data-reactid, '$RETURN_ON_ASSETS')]")))
-                    roa = driver.find_element_by_xpath("//*[contains(@data-reactid, '$RETURN_ON_ASSETS')]").text.rsplit(' ', 1)[1]
-                    roe = driver.find_element_by_xpath("//*[contains(@data-reactid, '$RETURN_ON_EQUITY')]").text.rsplit(' ', 1)[1]
-                    de_ratio = driver.find_element_by_xpath("//*[contains(@data-reactid, '$TOTAL_DEBT_TO_EQUITY')]").text.rsplit(' ', 1)[1]
-                    current_ratio = driver.find_element_by_xpath("//*[contains(@data-reactid, '$CURRENT_RATIO')]").text.rsplit(' ', 1)[1]
+                driver.get(url)
+                # time.sleep(1.5)
+                try:
+                        t = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, "//head/title[contains(., 'Yahoo Finance')]")))
 
-                    # xpath how to:
-                    # //td[text()="${nbsp}"]
-                    # //table[@id='TableID']//td[text()=' '] ?
-                    # //readAudit[@id='root'][1]
-                    # //a[contains(@prop,'Foo')]
+                        if 'Yahoo Finance' in driver.title:
+                            print(driver.title) 
+                            # roa = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, "//*[contains(@data-reactid, '$RETURN_ON_ASSETS')]")))
+                            roa = driver.find_element_by_xpath("//*[contains(@data-reactid, '$RETURN_ON_ASSETS')]").text.rsplit(' ', 1)[1]
+                            roe = driver.find_element_by_xpath("//*[contains(@data-reactid, '$RETURN_ON_EQUITY')]").text.rsplit(' ', 1)[1]
+                            de_ratio = driver.find_element_by_xpath("//*[contains(@data-reactid, '$TOTAL_DEBT_TO_EQUITY')]").text.rsplit(' ', 1)[1]
+                            current_ratio = driver.find_element_by_xpath("//*[contains(@data-reactid, '$CURRENT_RATIO')]").text.rsplit(' ', 1)[1]
 
-                    # split last character with rsplit
-                    data.extend([roa, roe, de_ratio, current_ratio])
-                    print(data)
+                            # xpath how to:
+                            # //td[text()="${nbsp}"]
+                            # //table[@id='TableID']//td[text()=' '] ?
+                            # //readAudit[@id='root'][1]
+                            # //a[contains(@prop,'Foo')]
 
-                    if WebScraping.yahooKeyStat(data[0], data[1], data[2], data[3]):
-                        keyStatList.append(stock)
-                        print(keyStatList)
-                # print(data)
-                # return data
-            except NoSuchElementException:
-                print('NoSuchElementException')
-            time.sleep(3)
+                            # split last character with rsplit
+                            data.extend([roa, roe, de_ratio, current_ratio])
+                            print(data)
+
+                            if WebScraping.yahooKeyStat(data[0], data[1], data[2], data[3]):
+                                keyStatList.append(stock)
+                                print(keyStatList)
+
+                except NoSuchElementException:
+                    print('NoSuchElementException')
+                
+                except TimeoutException:
+                    print('TimeoutException')
+
+                # else:
+                #     print('Unexcepted Error')
+
+                finally:
+                    pass
+
+            finally:
+                driver.quit()
+
         return(keyStatList)
 
 # ftnt = 'https://finance.yahoo.com/quote/FTNT/key-statistics'
