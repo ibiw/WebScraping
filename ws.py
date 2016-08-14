@@ -6,7 +6,7 @@ class WebScraping():
     def __init__(self):
         pass
 
-    def __str__():
+    def __str__(self):
         return 'Web Scraping with Python'
         
     # @classmethod
@@ -98,8 +98,7 @@ class WebScraping():
         # driver = webdriver.Chrome()
         # driver = webdriver.PhantomJS(service_args=['--webdriver-loglevel=ERROR'], service_log_path='/tmp/ghostdriver.log')
         # driver = webdriver.PhantomJS()
-        # driver.get(url)
-        # time.sleep(5)
+
         sum = len(stocks)
         count = 1
         while count <= sum:
@@ -182,7 +181,11 @@ def test():
 # print(WebScraping.seleniumGet('fit'))
 
       # df = pd.read_csv("nasdaq.csv")	## 1
+      ## ['AAON', 'ANIK', 'ATRI', 'BSTC', 'CPLA', 'CBOE', 'CBPO', 'DHIL', 'DORM', 'ENZN', 'EXPD', 'FIVE', 'FPRX', 'FRAN', 'INSY', 'IQNT', 'IRMD', 'ITRN', 'LANC', 'LLTC', 'LULU', 'FIZZ', 'EGOV', 'OFLX', 'PETS', 'SLP', 'SWKS', 'TROW', 'TSRA', 'RMR', 'THLD', 'TTNP', 'ULTA', 'UTHR', 'UG', 'WETF']
+
         # df = pd.read_csv("nyse.csv")	## 2
+        ## ['BPT', 'BKE', 'MN', 'MTR', 'MSB', 'MC']
+
         # df = pd.read_csv("amex.csv")	## 3
 
 sfiles = ['nasdaq.csv', 'nyse.csv', 'amex.csv']
