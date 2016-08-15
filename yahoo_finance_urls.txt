@@ -1,0 +1,8 @@
+http://finance.yahoo.com/webservice/v1/symbols/COALINDIA.NS/quote?format=json
+http://finance.yahoo.com/webservice/v1/symbols/COALINDIA.NS/quote?format=json&view=detail
+http://finance.yahoo.com/webservice/v1/symbols/YHOO,AAPL/quote?format=json&view=detail
+
+
+http://finance.yahoo.com/d/quotes.csv?s=GE+PTR+MSFT&f=snd1l1yr
+http://finance.yahoo.com/d/quotes.csv?s=ECA+CNQ.TO+TWTR+ANET+FTNT&f=snd1l1yr
+

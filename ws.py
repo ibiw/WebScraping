@@ -9,45 +9,6 @@ class WebScraping():
     def __str__(self):
         return 'Web Scraping with Python'
         
-    # @classmethod
-    # def pd(cls, url):
-    #     import pandas as pd
-    #     df = pd.read_html(url)
-    #     return df
-
-    # @classmethod
-    # def requests_get(cls, url):
-    #     import requests
-    #     from bs4 import BeautifulSoup
-       
-    #     # headers = {
-    #     #     'Accept' : 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-    #     #     'Accept-Encoding' : 'gzip, deflate, br',
-    #     #     'Accept-Language' : 'en-US,en;q=0.5',
-    #     #     'Cache-Control' : 'max-age=0',
-    #     #     'Connection' : 'keep-alive',
-    #     #     'Cookie ' : 'B=1lu3d6tbqko71&b=3&s=j9; PRF=t%3DFTNT; DNT=1',
-    #     #     'DNT' : '1', 
-    #     #     'Host' : 'finance.yahoo.com', 
-    #     #     'User-Agent' : 'Mozilla/5.0 (Windows NT 10.0; WOW64; rv:47.0) Gecko/20100101 Firefox/47.0'}       
-
-    #     with requests.Session() as s:
-    #         resp = s.get(url = url, headers = headers)
-    #         # resp.json()
-    #         resp_text = resp.text.encode('utf-8').decode('ascii', 'ignore')
-    #         soup = BeautifulSoup(resp_text, 'lxml')
-
-    #         # d2 = soup.find('div', class_ = 'W(100%) Pos(r)')
-
-    #         d2 = soup.find_all('data-reactid')
-
-    #         print(type(soup))
-    #         print(type(d2))
-    #         # print(d2)
-    #         # tables = d2.find_all('table')
-    #         # print(len(tables))
-    #         return(d2)
-
     @classmethod
     def getSymbol(cls, csvFile):
         import pandas as pd
@@ -79,7 +40,6 @@ class WebScraping():
             # print(cls, roa, roe, de_ratio, current_ratio)
             print('Hurry on!')
             return False
-
     
     @classmethod
     def seleniumGet(cls, stocks):
@@ -115,7 +75,7 @@ class WebScraping():
                 stock = stock.replace(' ', '')
                 url = 'https://finance.yahoo.com/quote/' + stock + '/key-statistics'
                 print(url)
-                # TimeoutError urllib.error.URLError
+
                 try:
                     driver.get(url)
                     # time.sleep(1.5)
@@ -159,6 +119,7 @@ class WebScraping():
                 finally:
                     # pass
                     # driver.quit()
+                    # quit PhantomJS and release all the resource after runnning 25 times
                     if count % 25 == 0:
                         print('------>{}'.format(count))
                         driver.quit() 
@@ -166,11 +127,63 @@ class WebScraping():
                         driver = webdriver.PhantomJS(service_args=['--webdriver-loglevel=ERROR'], service_log_path='/tmp/ghostdriver.log')
                         time.sleep(1)
 
-
-            driver.close
+            # quit PhantomJS after for loops
+            driver.quit()
             return keyStatList
 
+    # get data with pd.read_html from ca.finance.yahoo.com
+    @staticmethod
+    def ksyStatCompetitiors(stocks):
+        # from pandas_datareader import data
+        import pandas as pd
+        from time import sleep
 
+        selects = []
+        # all_a3 = ['AAON', 'AMBA', 'ATRI', 'BSTC', 'CPLA', 'CPSI', 'DHIL', 'DORM', 'ENTA', 'ENZN', 'FRAN', 'INSY', 'IQNT', 'IRMD', 'ITRN', 'VIVO', 'MNDO', 'OFLX', 'PETS', 'SLP', 'STRA', 'TSRA', 'UG', 'WETF', 'SAM', 'BPT', 'BKE', 'LXFT', 'MED', 'MTR', 'MSB', 'PZN', 'SBR', 'RGR', 'TNH', 'WHG']
+        # stocks = ['FTNT']
+        
+        ## the works url now is: ca.finance.yahoo.com
+        ## the url of Competitiors: url = https://ca.finance.yahoo.com/q/co?s=ENTA+Competitors
+
+        for stock in stocks:
+            # stock = stock.replace(' ', '')
+            url = 'https://ca.finance.yahoo.com/q/co?s=' + stock + '+Competitors'
+            print(url)
+            df = pd.read_html(url)
+            print(len(df))
+            # print(df[4])
+            if len(df) >= 5:	## avoid empty data, please note the value 4 and 5
+
+                try:
+                    df = df[4]	## choose the right list, and df is a dataframe
+                    # print(len(df))
+                    df.columns = df.iloc[1]	## replace the columns of numbers with strings
+                    #print(df)
+                    pe = df[[stock, 'Industry']].iat[11, 0]
+                    pe_industry = df[[stock, 'Industry']].iat[11, 1]
+                    print(pe, type(pe), pe_industry, type(pe_industry))
+                    if isinstance(pe, float) or isinstance(pe_industry, float):
+                        print('One or more P/E is N/A', stock)
+                    elif isinstance(pe, str) and isinstance(pe_industry, str):
+                        pe = float(pe)
+                        pe_industry = float(pe_industry)
+                        print(pe, type(pe), pe_industry, type(pe_industry))
+                        if pe/pe_industry < 0.85:
+                            selects.append(stock)
+                            print('Founded, and P/E divided by P/E Industry is :', pe/pe_industry)
+                        else:
+                            print('\tPass')
+                except KeyError as e:
+                    print(e)
+            else:
+                print("Empty Data:\t", stock)
+            sleep(0.01)
+        print(selects)
+        print('---All done!')
+        return(selects)
+
+
+# the url for Yahoo key statistic 
 # ftnt = 'https://finance.yahoo.com/quote/FTNT/key-statistics'
 
 def test():
@@ -181,20 +194,33 @@ def test():
 # print(WebScraping.seleniumGet('fit'))
 
       # df = pd.read_csv("nasdaq.csv")	## 1
-      ## ['AAON', 'ANIK', 'ATRI', 'BSTC', 'CPLA', 'CBOE', 'CBPO', 'DHIL', 'DORM', 'ENZN', 'EXPD', 'FIVE', 'FPRX', 'FRAN', 'INSY', 'IQNT', 'IRMD', 'ITRN', 'LANC', 'LLTC', 'LULU', 'FIZZ', 'EGOV', 'OFLX', 'PETS', 'SLP', 'SWKS', 'TROW', 'TSRA', 'RMR', 'THLD', 'TTNP', 'ULTA', 'UTHR', 'UG', 'WETF']
+      # df = pd.read_csv("nyse.csv")	## 2
+      # df = pd.read_csv("amex.csv")	## 3
 
-        # df = pd.read_csv("nyse.csv")	## 2
-        ## ['BPT', 'BKE', 'MN', 'MTR', 'MSB', 'MC']
+def main():
+    # sfiles = ['nasdaq.csv', 'nyse.csv', 'amex.csv']
+    # # sfiles = ['nyse.csv']
+    # for file in sfiles:
+    #     print('-'*20 + file + '-'*20)
+        
+    #     stocks = WebScraping.getSymbol(file)
+    #     data = WebScraping.seleniumGet(stocks)
+    #     print('The following symbols are from: {}\n'.format(file.split('.')[0]), data)
 
-        # df = pd.read_csv("amex.csv")	## 3
+    # from keystat_0813 import stocks
+    # print(stocks)
+    # data = WebScraping.ksyStatCompetitiors(stocks)
+    # print(data)
 
-sfiles = ['nasdaq.csv', 'nyse.csv', 'amex.csv']
-# sfiles = ['nyse.csv']
-for file in sfiles:
-    print('-'*20 + file + '-'*20)
-    
-    stocks = WebScraping.getSymbol(file)
+    stocks = []
+    with open('tsx.txt') as f:
+        for line in f:
+            stocks.append(line.strip())
+    # print(stocks)
     data = WebScraping.seleniumGet(stocks)
-    print(data)
+   
 
 
+
+if __name__ == '__main__':
+    main()

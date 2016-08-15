@@ -1,0 +1,1 @@
+stokcs = ['ANIK', 'ENZN', 'FPRX', 'IQNT', 'PETS', 'SWKS', 'TSRA', 'THLD', 'UTHR', 'UG', 'BPT', 'BKE', 'MN', 'MTR', 'TARO', 'TNH']
