@@ -31,14 +31,16 @@ class daily_check():
 		with requests.Session() as self.s:
 			#resp = self.s.post(url = self.url_login, data = details_1, headers = self.headers)
 			resp = self.s.post(url = self.url_login, data = details_2, headers = self.headers)
+			
+			# get protfolios urls
 			resp_data = self.s.get(self.url_protfolio)
 			resp_text = resp_data.text.encode('utf-8').decode('ascii', 'ignore')
 			soup = BeautifulSoup(resp_text, 'lxml')
-
 			for a in soup.find_all('a', href=True):
 				if re.findall('http://finance.yahoo.com/portfolio/', a['href']):
 					self.my_protfolio_urls.append(a['href'])
 					# self.my_protfolio_names.append(a.text)
+			# change a list to set to remove duplicated items, the sort it. After sort, it changs to list again.
 			self.my_protfolio_urls = sorted(set(self.my_protfolio_urls))
 			# self.my_protfolio_names = set(self.my_protfolio_names)
 
