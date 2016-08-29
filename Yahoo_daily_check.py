@@ -1,9 +1,12 @@
 import pandas as pd
+import numpy as np
 import requests
 from bs4 import BeautifulSoup
 import sys
 import re
 #import json
+
+pd.set_option('expand_frame_repr', False)
 
 class daily_check():
 
@@ -19,19 +22,25 @@ class daily_check():
 		self.my_protfolio_names = []
 	
 	@staticmethod
-	def ZacksRank(symbol):
+	def ZacksRank(symbols):
 		zacks_url_base = 'https://www.zacks.com/stock/quote/'
-		url = zacks_url_base + symbol
-
+		
 		with requests.Session() as s:
-			resp_data = s.get(url)
-			resp_text = resp_data.text
-			soup = BeautifulSoup(resp_text, 'lxml')
-			rank_box = soup.find_all('div', {'class' : 'zr_rankbox'})
-			for item in rank_box:
-				if '-' in item.text:
-					return item.text.strip().split('-')[0]
-					# return item.text.strip()
+			ranks = []
+			for symbol in symbols:
+				url = zacks_url_base + symbol
+				resp_data = s.get(url)
+				resp_text = resp_data.text
+				soup = BeautifulSoup(resp_text, 'lxml')
+				rank_box = soup.find_all('div', {'class' : 'zr_rankbox'})
+				## return None if there is no ranking
+				def get_rank(rank_box):
+					for item in rank_box:
+						if '-' in item.text:
+							return item.text.strip().split('-')[0]
+				ranks.append(get_rank(rank_box))
+						# return item.text.strip()
+		return ranks
 
 
 	def login(self):
@@ -43,6 +52,11 @@ class daily_check():
 		#print(data)
 		#print(details_2)
 
+		## if ranking is True, then display Zacks Ranking
+		ranking = False
+		choice = input('Display Zacks Ranking? Yes/No(No):')
+		if 'y' in choice.lower():
+			ranking = True
 		with requests.Session() as self.s:
 			#resp = self.s.post(url = self.url_login, data = details_1, headers = self.headers)
 			resp = self.s.post(url = self.url_login, data = details_2, headers = self.headers)
@@ -65,6 +79,8 @@ class daily_check():
 			# 	print(link)
 
 			for url in self.my_protfolio_urls:
+				if 'p_16/view/v1' in url:
+					continue
 				try:
 					print('\n\t', url)
 					resp_data = self.s.get(url = url)
@@ -97,26 +113,46 @@ class daily_check():
 									continue
 								else:
 									#sys.stdout.write(td.text + '\t')
-									td_list.append(td.text)
+									td_text = td.text.replace(',', '').replace('%', '')
+									# if td.text == '-':
+									# 	td.text = np.nan
+									td_list.append(td_text)
 							#td_series = pd.Series(td_list)
-							#print(td_list)
+							# print(td_list)
 							pd_list.append(td_list)
 							#df = df.append(td_series, ignore_index = True)
 							#sys.stdout.write('\n')
 						df = pd.DataFrame(pd_list, columns = df_columns)
 						df.index = df.SYMBOL
+						## change all coloumns to numeric if possible
+						df = df.apply(lambda x: pd.to_numeric(x, errors='ignore'))
+						# def color_negative_red(val):
+						# 	"""
+						# 	Takes a scalar and returns a string with
+						# 	the css property `'color: red'` for negative
+						# 	strings, black otherwise.
+						# 	"""
+						# 	color = 'red' if val < 0 else 'black'
+						# 	return 'color: %s' % color
 						
-						ranks = []
-						for item in df.index:
-							ranks.append(self.ZacksRank(item))
-						print(ranks)
-						df['R'] = ranks
+						# df = df.style.applymap(color_negative_red)
+						# ranks = []
+						# for item in df.index:
+						# 	ranks.append(self.ZacksRank(item))
+						# print(ranks)
+						# df['R'] = ranks
 						# df['VOL%'] = df['VOLUME'] / df['AVG VOL']
 
 
 						#print(df.sort_values(by = '% CHG')[['% CHG', 'PRICE', 'DAY\'S LOW', 'DAY\'S HIGH', 'VOLUME', 'AVG VOL']])
 						if '/p_1/view/v3' not in url:
-							print(df[['% CHG', 'PRICE', 'D LOW', 'D HIGH', 'VOLUME', 'AVG VOL', '%50MA', 'R']])
+							df['VOL %'] = df['VOLUME'] / df['AVG VOL']
+							if ranking:
+								ranks = self.ZacksRank(df.index)
+								df['R'] = ranks
+								print(df[['% CHG', 'PRICE', 'D LOW', 'D HIGH', 'VOL %', '%50MA', 'R']])
+							else:
+								print(df[['% CHG', 'PRICE', 'D LOW', 'D HIGH', 'VOL %', '%50MA']])
 						else:
 							print(df[['% CHG', 'PRICE', 'D LOW', 'D HIGH', 'VOLUME']])							
 						#print(df.columns)
@@ -152,4 +188,8 @@ def main():
 	dc = daily_check(url_login, username, passwd, headers, url_protfolio)
 	dc.login()
 
-main()
+if __name__ == '__main__':
+	try:
+		main()
+	except KeyboardInterrupt:
+		exit('\nExit through KeyboardInterrupt, Bye-Bye.')
