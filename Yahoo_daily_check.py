@@ -17,7 +17,22 @@ class daily_check():
 		self.s = None
 		self.my_protfolio_urls = []
 		self.my_protfolio_names = []
-		
+	
+	@staticmethod
+	def ZacksRank(symbol):
+		zacks_url_base = 'https://www.zacks.com/stock/quote/'
+		url = zacks_url_base + symbol
+
+		with requests.Session() as s:
+			resp_data = s.get(url)
+			resp_text = resp_data.text
+			soup = BeautifulSoup(resp_text, 'lxml')
+			rank_box = soup.find_all('div', {'class' : 'zr_rankbox'})
+			for item in rank_box:
+				if '-' in item.text:
+					return item.text.strip().split('-')[0]
+					# return item.text.strip()
+
 
 	def login(self):
 		#details_1 = {'username': self.username, 'signin' : 'authtype', 'countrycode' : '1', 'seqid' : '2', '_format' : 'json'}
@@ -41,7 +56,9 @@ class daily_check():
 					self.my_protfolio_urls.append(a['href'])
 					# self.my_protfolio_names.append(a.text)
 			# change a list to set to remove duplicated items, the sort it. After sort, it changs to list again.
+			# print(self.my_protfolio_urls)
 			self.my_protfolio_urls = sorted(set(self.my_protfolio_urls))
+			# self.my_protfolio_urls = list(set(self.my_protfolio_urls))
 			# self.my_protfolio_names = set(self.my_protfolio_names)
 
 			# for link in self.my_protfolio_urls:
@@ -49,7 +66,7 @@ class daily_check():
 
 			for url in self.my_protfolio_urls:
 				try:
-					print(url)
+					print('\n\t', url)
 					resp_data = self.s.get(url = url)
 					resp_text = resp_data.text.encode('utf-8').decode('ascii', 'ignore')
 					#resp_data.encoding = 'UTF-8'
@@ -88,8 +105,20 @@ class daily_check():
 							#sys.stdout.write('\n')
 						df = pd.DataFrame(pd_list, columns = df_columns)
 						df.index = df.SYMBOL
+						
+						ranks = []
+						for item in df.index:
+							ranks.append(self.ZacksRank(item))
+						print(ranks)
+						df['R'] = ranks
+						# df['VOL%'] = df['VOLUME'] / df['AVG VOL']
+
+
 						#print(df.sort_values(by = '% CHG')[['% CHG', 'PRICE', 'DAY\'S LOW', 'DAY\'S HIGH', 'VOLUME', 'AVG VOL']])
-						print(df[['% CHG', 'PRICE', 'D LOW', 'D HIGH', 'VOLUME', 'AVG VOL', '%50MA']])
+						if '/p_1/view/v3' not in url:
+							print(df[['% CHG', 'PRICE', 'D LOW', 'D HIGH', 'VOLUME', 'AVG VOL', '%50MA', 'R']])
+						else:
+							print(df[['% CHG', 'PRICE', 'D LOW', 'D HIGH', 'VOLUME']])							
 						#print(df.columns)
 					else:
 						print("Nothing")
